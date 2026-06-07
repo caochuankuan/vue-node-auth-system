@@ -4,18 +4,18 @@ import { authAPI } from '@/services/api';
 import router from '@/router';
 
 export const useUserStore = defineStore('user', () => {
-  const user = ref<any>(null);
-  const token = ref<string | null>(localStorage.getItem('token'));
+  const user = ref(null);
+  const token = ref(localStorage.getItem('token'));
 
   // Register user
-  const register = async (data: { username: string; email: string; password: string; verificationCode: string }) => {
+  const register = async (data) => {
     try {
       const response = await authAPI.register(data);
       user.value = response.data;
       token.value = response.data.token;
       localStorage.setItem('token', response.data.token);
       return { success: true };
-    } catch (error: any) {
+    } catch (error) {
       return { 
         success: false, 
         message: error.response?.data?.message || 'Registration failed' 
@@ -24,14 +24,14 @@ export const useUserStore = defineStore('user', () => {
   };
 
   // Login user
-  const login = async (data: { email: string; password: string }) => {
+  const login = async (data) => {
     try {
       const response = await authAPI.login(data);
       user.value = response.data;
       token.value = response.data.token;
       localStorage.setItem('token', response.data.token);
       return { success: true };
-    } catch (error: any) {
+    } catch (error) {
       return { 
         success: false, 
         message: error.response?.data?.message || 'Login failed' 
@@ -40,11 +40,11 @@ export const useUserStore = defineStore('user', () => {
   };
 
   // Send verification code
-  const sendVerificationCode = async (email: string) => {
+  const sendVerificationCode = async (email) => {
     try {
       await authAPI.sendVerificationCode(email);
       return { success: true };
-    } catch (error: any) {
+    } catch (error) {
       return { 
         success: false, 
         message: error.response?.data?.message || 'Failed to send verification code' 
@@ -66,7 +66,7 @@ export const useUserStore = defineStore('user', () => {
     try {
       const response = await authAPI.getCurrentUser();
       user.value = response.data;
-    } catch (_error) {
+    } catch (error) {
       logout();
     }
   };

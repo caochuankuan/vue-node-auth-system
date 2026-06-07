@@ -1,9 +1,5 @@
-<script setup lang="ts">
-import { RouterView } from 'vue-router'
-</script>
-
 <template>
-  <RouterView />
+  <router-view />
 </template>
 
 <style>
@@ -13,7 +9,9 @@ import { RouterView } from 'vue-router'
   box-sizing: border-box;
 }
 
-body {
-  font-family: Arial, sans-serif;
+html, body, #app {
+  width: 100%;
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 </style>

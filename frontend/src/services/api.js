@@ -23,17 +23,17 @@ api.interceptors.request.use(
 
 export const authAPI = {
   // Send verification code
-  sendVerificationCode(email: string) {
+  sendVerificationCode(email) {
     return api.post('/auth/send-code', { email });
   },
 
   // Register user
-  register(data: { username: string; email: string; password: string; verificationCode: string }) {
+  register(data) {
     return api.post('/auth/register', data);
   },
 
   // Login user
-  login(data: { email: string; password: string }) {
+  login(data) {
     return api.post('/auth/login', data);
   },
 
