@@ -304,7 +304,9 @@ Authorization: Bearer <token>
 - MongoDB 数据库
 - QQ 邮箱账号（已开启 SMTP 服务）
 
-### 后端启动
+### 开发环境
+
+#### 后端启动
 
 ```bash
 # 进入后端目录
@@ -322,7 +324,7 @@ npm run dev
 
 后端服务将运行在: **http://localhost:3000**
 
-### 前端启动
+#### 前端启动
 
 ```bash
 # 进入前端目录
@@ -337,14 +339,184 @@ npm run dev
 
 前端服务将运行在: **http://localhost:5173**
 
-### 生产构建
+---
+
+## 生产环境部署
+
+### 🚀 一键部署流程
+
+本项目采用**后端 Serve 前端静态文件**的架构，只需启动一个后端服务即可。
+
+#### 部署步骤
 
 ```bash
-# 前端构建
-cd frontend
-npm run build
+# 1. 上传代码到服务器
+git clone https://github.com/caochuankuan/vue-node-auth-system.git
+cd vue-node-auth-system
 
-# 生成的静态文件在 dist/ 目录
+# 2. 配置环境变量
+nano backend/.env
+```
+
+编辑 `backend/.env`：
+
+```env
+PORT=3000
+MONGODB_URI=mongodb://localhost:27017/auth_system
+JWT_SECRET=your_super_secure_random_string_here
+JWT_EXPIRE=7d
+EMAIL_USER=your_qq@qq.com
+EMAIL_PASS=your_authorization_code
+NODE_ENV=production
+```
+
+```bash
+# 3. 构建前端
+cd frontend
+npm install
+npm run build
+cd ..
+
+# 4. 安装后端依赖并启动
+cd backend
+npm install --production
+pm2 start ecosystem.config.js
+pm2 save
+
+# 完成！访问 http://your-server-ip
+```
+
+#### 架构说明
+
+```
+用户访问 http://server-ip
+    ↓
+Express (Port 3000)
+    ├─ /api/* → API 路由（后端处理）
+    └─ /* → 前端静态文件（frontend/dist/）
+         └─ index.html (Vue SPA)
+```
+
+**优势**：
+- ✅ 只需一个端口（3000）
+- ✅ 只需一个进程（PM2 管理）
+- ✅ 无需 Nginx（可选）
+- ✅ 简化部署流程
+
+### 🔧 常用命令
+
+#### PM2 管理
+
+```bash
+# 查看状态
+pm2 status
+
+# 查看日志
+pm2 logs auth-api
+
+# 重启服务
+pm2 restart auth-api
+
+# 停止服务
+pm2 stop auth-api
+
+# 实时监控
+pm2 monit
+```
+
+#### 更新部署
+
+```bash
+# 拉取最新代码
+git pull
+
+# 重新构建前端
+cd frontend && npm install && npm run build && cd ..
+
+# 重启后端
+cd backend && npm install --production && pm2 restart auth-api && cd ..
+```
+
+### 🔒 安全建议
+
+#### 1. 配置防火墙
+
+```bash
+sudo ufw allow 22    # SSH
+sudo ufw allow 80    # HTTP
+sudo ufw allow 443   # HTTPS
+sudo ufw enable
+```
+
+#### 2. 配置 HTTPS（推荐）
+
+使用 Nginx + Let's Encrypt：
+
+```bash
+sudo apt install nginx certbot python3-certbot-nginx
+sudo certbot --nginx -d your-domain.com
+```
+
+Nginx 反向代理配置：
+
+```nginx
+server {
+    listen 443 ssl http2;
+    server_name your-domain.com;
+
+    ssl_certificate /etc/letsencrypt/live/your-domain.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/your-domain.com/privkey.pem;
+
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+    }
+}
+```
+
+#### 3. MongoDB 安全
+
+启用认证并创建专用用户：
+
+```javascript
+// MongoDB Shell
+use auth_system
+db.createUser({
+  user: "authuser",
+  pwd: "securepassword",
+  roles: [{ role: "readWrite", db: "auth_system" }]
+})
+```
+
+更新 `.env`:
+```env
+MONGODB_URI=mongodb://authuser:securepassword@localhost:27017/auth_system
+```
+
+### 📊 监控和维护
+
+#### 日志位置
+
+```bash
+# PM2 日志
+~/.pm2/logs/auth-api-error.log
+~/.pm2/logs/auth-api-out.log
+
+# 实时查看
+pm2 logs auth-api --lines 100
+```
+
+#### 备份数据库
+
+```bash
+# 备份
+mongodump --db auth_system --out /backup/mongodb-$(date +%Y%m%d)
+
+# 恢复
+mongorestore --db auth_system /backup/mongodb-20260607/auth_system
 ```
 
 ---

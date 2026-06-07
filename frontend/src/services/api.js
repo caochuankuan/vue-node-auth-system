@@ -1,7 +1,12 @@
 import axios from 'axios';
 
+// 开发环境使用完整 URL，生产环境使用相对路径（由后端代理）
+const baseURL = import.meta.env.DEV 
+  ? 'http://localhost:3000/api' 
+  : '/api';
+
 const api = axios.create({
-  baseURL: 'http://localhost:3000/api',
+  baseURL,
   headers: {
     'Content-Type': 'application/json'
   }
