@@ -32,7 +32,7 @@ if (isProduction) {
     app.use(express.static(frontendDistPath));
     
     // Handle SPA routing - all non-API routes return index.html
-    app.get('*', (req, res, next) => {
+    app.use((req, res, next) => {
       if (!req.path.startsWith('/api')) {
         res.sendFile(path.join(frontendDistPath, 'index.html'));
       } else {
