@@ -31,7 +31,7 @@ router.post('/send-code', async (req, res) => {
 
     // Generate and send verification code
     const code = generateVerificationCode();
-    storeVerificationCode(email, code);
+    await storeVerificationCode(email, code);
     
     await sendVerificationEmail(email, code);
 
@@ -55,7 +55,7 @@ router.post('/register', async (req, res) => {
     }
 
     // Verify the code
-    const verification = verifyCode(email, verificationCode);
+    const verification = await verifyCode(email, verificationCode);
     if (!verification.valid) {
       return res.status(400).json({ message: verification.message });
     }

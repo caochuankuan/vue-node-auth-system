@@ -1,32 +1,42 @@
-// In-memory storage for verification codes
-// In production, use Redis or database
-const verificationCodes = new Map();
+const VerificationCode = require('../models/VerificationCode');
 
 // Store verification code with expiration (5 minutes)
-const storeVerificationCode = (email, code) => {
-  const expirationTime = Date.now() + 5 * 60 * 1000; // 5 minutes
-  verificationCodes.set(email, { code, expiresAt: expirationTime });
+const storeVerificationCode = async (email, code) => {
+  const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+  
+  // Delete any existing verification codes for this email
+  await VerificationCode.deleteMany({ email });
+  
+  // Create new verification code
+  await VerificationCode.create({
+    email,
+    code,
+    expiresAt
+  });
 };
 
 // Verify code
-const verifyCode = (email, code) => {
-  const stored = verificationCodes.get(email);
+const verifyCode = async (email, code) => {
+  // Find the verification code
+  const verificationCode = await VerificationCode.findOne({ email });
   
-  if (!stored) {
+  if (!verificationCode) {
     return { valid: false, message: '验证码不存在或已过期' };
   }
   
-  if (Date.now() > stored.expiresAt) {
-    verificationCodes.delete(email);
+  // Check if expired
+  if (new Date() > verificationCode.expiresAt) {
+    await VerificationCode.deleteOne({ _id: verificationCode._id });
     return { valid: false, message: '验证码已过期' };
   }
   
-  if (stored.code !== code) {
+  // Check if code matches
+  if (verificationCode.code !== code) {
     return { valid: false, message: '验证码错误' };
   }
   
   // Delete code after successful verification
-  verificationCodes.delete(email);
+  await VerificationCode.deleteOne({ _id: verificationCode._id });
   return { valid: true, message: '验证成功' };
 };
 
