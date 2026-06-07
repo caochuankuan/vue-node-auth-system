@@ -7,9 +7,6 @@ const connectDB = require('./config/db');
 // Load env vars
 dotenv.config();
 
-// Connect to database
-connectDB();
-
 const app = express();
 
 // Body parser
@@ -27,23 +24,36 @@ app.use('/api/auth', require('./routes/auth'));
 
 // Serve static files in production
 if (isProduction) {
+  const fs = require('fs');
   const frontendDistPath = path.join(__dirname, '../frontend/dist');
-  app.use(express.static(frontendDistPath));
   
-  // Handle SPA routing - all non-API routes return index.html
-  app.get('*', (req, res, next) => {
-    if (!req.path.startsWith('/api')) {
-      res.sendFile(path.join(frontendDistPath, 'index.html'));
-    } else {
-      next();
-    }
-  });
+  // Check if dist folder exists
+  if (fs.existsSync(frontendDistPath)) {
+    app.use(express.static(frontendDistPath));
+    
+    // Handle SPA routing - all non-API routes return index.html
+    app.get('*', (req, res, next) => {
+      if (!req.path.startsWith('/api')) {
+        res.sendFile(path.join(frontendDistPath, 'index.html'));
+      } else {
+        next();
+      }
+    });
+  } else {
+    console.warn('Warning: frontend/dist not found. Please build the frontend first.');
+  }
 }
 
 // Basic route
 app.get('/', (req, res) => {
   if (isProduction) {
-    res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));
+    const fs = require('fs');
+    const indexPath = path.join(__dirname, '../frontend/dist', 'index.html');
+    if (fs.existsSync(indexPath)) {
+      res.sendFile(indexPath);
+    } else {
+      res.json({ message: 'Welcome to the API (Frontend not built)' });
+    }
   } else {
     res.json({ message: 'Welcome to the API' });
   }
@@ -57,6 +67,13 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+// Connect to database and start server
+connectDB().then(() => {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+    console.log(`Environment: ${isProduction ? 'production' : 'development'}`);
+  });
+}).catch(err => {
+  console.error('Failed to connect to database:', err.message);
+  process.exit(1);
 });
